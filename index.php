@@ -20,6 +20,8 @@ $dir = array(
 );
 
 foreach ($dir as $rutas) {
+    //$a = scandir($rutas);
+    //print_r($a);
     
     buscarpdf($rutas);
 }
@@ -71,7 +73,7 @@ function buscarpdf($pathx)
     $length = $GLOBALS["length"];
     $procesar = true;
 
-    $eldir = scandir("'".$pathx."'");
+    $eldir = scandir($pathx);
 
     // Arreglo con todos los nombres de los archivos
     $files = array_diff($eldir, array('.', '..'));
@@ -105,7 +107,7 @@ function buscarpdf($pathx)
                     $parte2 = $pathx . '/' . $data[0] . '_P1' . ".pdf";
                     if (file_exists($parte1) || file_exists($parte2)) {
                         $procesar = false;
-                        echo $file . ' -Archivo ya procesado-' . chr(10);
+                        echo '['.$file . '] -Archivo ya procesado-' . chr(10);
                     } else {
                         $procesar = true;
                     }
@@ -130,7 +132,7 @@ function buscarpdf($pathx)
             $fileName = $data[0];
             $fileExtension = $data[1];
 
-            echo $file . ' ';
+            echo '['.$file . '] ';
 
             $old_pdf = $pathx . '/' . $file;
             $new_pdf = $pathx . '/' . $fileName . '_P';
@@ -163,7 +165,7 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath)
 
     $pdf = new Fpdi();
     $pagecount = $pdf->setSourceFile($pdfAbsolutePath);
-    echo $pagecount . ' pág ';
+    echo '['.$pagecount . ' pág] ';
     if ($pagecount) {
         if ($pagecount > 1) {
             $fecha = new DateTime();
@@ -181,15 +183,17 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath)
                 $new_pdf->useTemplate($new_pdf->importPage($i));
                 try {
                     $new_filename = $new_filename2;
+                    echo "---------";
                     //$new_pdf->Output($new_filename, "F");
                     //obtenemos mdf5 y timestamp de la hoja
                     $file_content = $new_pdf->Output("S",$new_filename, false);
                     $md5f = md5($file_content);
                     $cadMd5ts = cadstamtime($md5f, $i);
                     //agregamos MD5 + timespamt + hoja
-                    $new_pdf->SetFont('Arial', 'B', '11');
+                    $new_pdf->SetFont('Arial', 'R', '11');
                     $new_pdf->SetXY(30,-15);
                     $new_pdf->Write(200,$cadMd5ts);
+                    print_r(" cadena MD5 ");
                     //guardamos
                     $new_pdf->Output($new_filename, "F");
                 } catch (Exception $e) {
@@ -301,7 +305,7 @@ function isActiveGS()
 function cadstamtime($md5actual, $hoja)
 {
     $hoy = time();
-    return $md5actual.' '.date("Y-m-d H:I:s",$hoy).' page ['.$hoja.']';
+    return $md5actual.'  '.date("Y-m-d H:I:s",$hoy).' page '.$hoja;
 }
 
 ?>
