@@ -20,8 +20,8 @@ $dir = array(
 );
 
 foreach ($dir as $paths) {
-    print_r($dir);
-    print_r($paths);
+    print_r($dir).chr(10);
+    print_r($paths).chr(10);
     
     buscarpdf($paths);
 }
@@ -76,7 +76,7 @@ function buscarpdf($path)
     
 
     // Arreglo con todos los nombres de los archivos
-    $files = array_diff(scandir($path), array('.', '..'));
+    $files = array_diff(scandir("'".$path."'"), array('.', '..'));
     echo 'Ruta: ' . $path . chr(10);
     //listamos los archivos que no contengan la clave _P00000 y a parte la lista de directorios
     foreach ($files as $file) {
