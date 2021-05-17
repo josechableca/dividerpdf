@@ -16,7 +16,7 @@ $length = 5;
 
 // directorios fijos
 $dir = array(
-    '/pruebas/sepatarePDF/carpetaB'
+    '/pruebas/sepatarePDF/carpetaA'
 );
 
 foreach ($dir as $paths) {
