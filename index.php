@@ -62,7 +62,7 @@ function buscartexto($origen, $texto)
 }
 
 
-function buscarpdf($path)
+function buscarpdf($pathx)
 {
     $afiles = array();
     $adir = array();
@@ -71,17 +71,17 @@ function buscarpdf($path)
     $length = $GLOBALS["length"];
     $procesar = true;
 
-    $eldir = scandir("'".$path."'");
+    $eldir = scandir("'".$pathx."'");
 
     // Arreglo con todos los nombres de los archivos
     $files = array_diff($eldir, array('.', '..'));
-    echo 'Ruta: ' . $path . chr(10);
+    echo 'Ruta: ' . $pathx . chr(10);
     //listamos los archivos que no contengan la clave _P00000 y a parte la lista de directorios
     foreach ($files as $file) {
         $procesar = true;
         $data = explode(".", $file);
         //si es un archivo
-        if (is_file($path . '/' . $file)) {
+        if (is_file($pathx . '/' . $file)) {
             $fileExtension = $data[1];
             //es un archivo pdf
             if (strtoupper($fileExtension) == 'PDF') {
@@ -101,8 +101,8 @@ function buscarpdf($path)
                     }
                 } else {
                     $string1 = substr(str_repeat(0, $length) . '1', -$length);
-                    $parte1 = $path . '/' . $data[0] . '_P' . $string1 . ".pdf";
-                    $parte2 = $path . '/' . $data[0] . '_P1' . ".pdf";
+                    $parte1 = $pathx . '/' . $data[0] . '_P' . $string1 . ".pdf";
+                    $parte2 = $pathx . '/' . $data[0] . '_P1' . ".pdf";
                     if (file_exists($parte1) || file_exists($parte2)) {
                         $procesar = false;
                         echo $file . ' -Archivo ya procesado-' . chr(10);
@@ -132,8 +132,8 @@ function buscarpdf($path)
 
             echo $file . ' ';
 
-            $old_pdf = $path . '/' . $file;
-            $new_pdf = $path . '/' . $fileName . '_P';
+            $old_pdf = $pathx . '/' . $file;
+            $new_pdf = $pathx . '/' . $fileName . '_P';
 
             $oldpath = $new_pdf;
 
@@ -146,12 +146,12 @@ function buscarpdf($path)
                 }
             }*/
 
-            dividerPdf($path, $new_pdf, $old_pdf);
+            dividerPdf($pathx, $new_pdf, $old_pdf);
             
         }
     } else {
         foreach ($adir as $ruta) {
-            buscarpdf($path . "/" . $ruta);
+            buscarpdf($pathx . "/" . $ruta);
         }
     }
 }
