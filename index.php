@@ -72,7 +72,7 @@ function buscarpdf($path)
     $ndir = 0;
     $length = $GLOBALS["length"];
     $procesar = true;
-    $
+    
     
 
     // Arreglo con todos los nombres de los archivos
