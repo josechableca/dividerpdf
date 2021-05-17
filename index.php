@@ -20,8 +20,8 @@ $dir = array(
 );
 
 foreach ($dir as $paths) {
-    echo $dir;
-    echo $paths;
+    print_r($dir);
+    print_r($paths);
     
     buscarpdf($paths);
 }
