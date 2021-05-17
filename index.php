@@ -19,9 +19,9 @@ $dir = array(
     '/pruebas/separatePDF/carpetaA'
 );
 
-foreach ($dir as $paths) {
-    print_r(scandir($paths));
-    buscarpdf($paths);
+foreach ($dir as $rutas) {
+    
+    buscarpdf($rutas);
 }
 
 /* se usan los parametros de linea de comando
@@ -70,11 +70,11 @@ function buscarpdf($path)
     $ndir = 0;
     $length = $GLOBALS["length"];
     $procesar = true;
-    
-    
+
+    $eldir = scandir("'".$path."'");
 
     // Arreglo con todos los nombres de los archivos
-    $files = array_diff(scandir("'".$path."'"), array('.', '..'));
+    $files = array_diff($eldir, array('.', '..'));
     echo 'Ruta: ' . $path . chr(10);
     //listamos los archivos que no contengan la clave _P00000 y a parte la lista de directorios
     foreach ($files as $file) {
