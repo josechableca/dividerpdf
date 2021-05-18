@@ -1,49 +1,160 @@
 <?php
 
+$DirApp = __DIR__;
+
+
 use setasign\Fpdi\Fpdi;
 
 require_once('setasign/fpdf/fpdf.php');
 require_once('setasign/Fpdi/autoload.php');
-//require_once('setasign/Fpdi/Fpdi.php');
 require_once('setasign/fpdi_pdf-parser2/src/autoload.php');
 
+$cadMd5ts = "";
 
 date_default_timezone_set('UTC');
-//separador de ruta /  \
+
 $rut = chr(47); // chr(47)/ chr(92)\
 //numero de ceros en nombre 00000
 $length = 5;
 
-// directorios fijos
-$dir = array(
-    '/pruebas/separatePDF/carpetaA'
-);
+// directorios fijos archivo configdir.txt
+$dir = LoadDir();
+$hoy = time();
+$namefile = date("Ymd_", $hoy);
+$namefiletxt = $DirApp.'/log/'.$namefile.$hoy.'.txt';
+$fileLog = fopen($namefiletxt,"w");
+    fwrite($fileLog, 'Monitoreo de division de archivos PDF : '.date("YY-m-d h:i:s").PHP_EOL );
+fclose($fileLog);
 
 foreach ($dir as $rutas) {
-    //$a = scandir($rutas);
-    //print_r($a);
     
-    buscarpdf($rutas);
+    List($tfile, $tdir, $nfle, $exnte, $ttal_P) = buscarpdf($rutas,$namefiletxt);
+
 }
 
-/* se usan los parametros de linea de comando
-if ($argc > 1) {
-    $Numinicial = 1;
-    $primero = strtoupper($argv[0]);
-    if ($primero == "PHP") {
-        $Numinicial = 2;
-    }
-        
-    for ($i = $Numinicial; $i <= $argc; $i++) {
-
-        buscarpdf($argv[$i]);
-    }
-} else {
-    print_r("Error. Debe indicar: php index.php ruta1 [ruta2] [ruat3] ...".chr(10).chr(10));
-}
-*/
 
 /* ------------------------ */
+function buscarpdf($pathx, $namefiletxt)
+{
+    $afiles = array();
+    $adir = array();
+    $nfile = 0;
+    $ndir = 0;
+    $totalfile = 0;
+    $totalpdf = 0;
+    $total_P = 0;
+    $otros = 0;
+    $totaldir = 0;
+    $existente = 0;
+    $fileprocess = 0;
+    $dirprocess = 0;
+    
+    $length = $GLOBALS["length"];
+    $procesar = true;
+
+    $eldir = scandir($pathx);
+    // Arreglo con todos los nombres de los archivos
+    $files = array_diff($eldir, array('.', '..'));
+    if (!$namefiletxt) {
+    $hoy = time();
+    $namefile = date("Ymd_", $hoy);
+    $namefiletxt = $GLOBALS["DirApp"].'/log/'.$namefile.$hoy.'.txt';
+    } 
+    $fileLog = fopen($namefiletxt,"a");
+    fwrite($fileLog, 'Ruta: ' . $pathx.PHP_EOL );
+
+    //listamos los archivos que no contengan la clave _P00000 y a parte la lista de directorios
+    foreach ($files as $file) {
+        
+        $procesar = true;
+        $data = explode(".", $file);
+        //si es un archivo
+        if (is_file($pathx . '/' . $file)) {
+            $totalfile++;
+            $fileExtension = $data[1];
+            //es un archivo pdf
+            if (strtoupper($fileExtension) == 'PDF') {
+                $totalpdf++;
+                //busca si tiene la clave _P
+                $indexb = buscartexto($data[0], '_P');
+                if ($indexb > 0) {
+                    $largo = strlen($data[0]) - $indexb - 2;
+                    //despues de la clave hay caracteres
+                    if ($largo > 0 && $largo <= $length) {
+                        //obtenemos la parte numerica
+                        $part2 = substr($data[0], $indexb + 2, $largo);
+                        $valpart2 = intval($part2);
+                        //es un valor 1 a 99999
+                        if ($valpart2 > 0 && $valpart2 < 100000) {
+                            $total_P++;
+                            $procesar = false;
+                        }
+                    }
+                } else {
+                    $string1 = substr(str_repeat(0, $length) . '1', -$length);
+                    $parte1 = $pathx . '/' . $data[0] . '_P' . $string1 . ".pdf";
+                    $parte2 = $pathx . '/' . $data[0] . '_P1' . ".pdf";
+                    if (file_exists($parte1) || file_exists($parte2)) {
+                        $procesar = false;
+                        //echo '[' . $file . '] -Archivo ya procesado-' . chr(10);
+                        $existente++;
+                    } else {
+                        $procesar = true;
+                    }
+                }
+
+                if ($procesar) {
+                    array_push($afiles, $file);
+                    $nfile += 1;
+                }
+            }
+        } else {
+            $totaldir++;
+            array_push($adir, $file);
+            $ndir += 1;
+        }
+    }
+
+    //procesamos primero los archivos del directorio
+    if ($nfile > 0) {
+        foreach ($afiles as $file) {
+            $data = explode(".", $file);
+            // Nombre del archivo
+            $fileName = $data[0];
+            $fileExtension = $data[1];
+            
+            $ejecuta = '[' . $file . '] ';
+
+            $old_pdf = $pathx . '/' . $file;
+            $new_pdf = $pathx . '/' . $fileName . '_P';
+            
+            $resultado = dividerPdf($pathx, $new_pdf, $old_pdf);
+            
+            fwrite($fileLog,$ejecuta.$resultado.PHP_EOL);
+
+        }
+        if ($ndir >0 ) {
+        fclose($fileLog);
+        }
+    } else {
+        if ($nfile = 0) fclose($fileLog);
+
+        foreach ($adir as $ruta) {
+            List($tfile, $tdir, $nfle, $exnte, $ttal_P) = buscarpdf($pathx . "/" . $ruta, $namefiletxt);
+            $totalfile += $tfile;
+            $totaldir += $tdir;
+            $nfile += $nfle;
+            $existente += $exnte;
+            $total_P += $ttal_P;
+        }
+        $fileLog = fopen($namefiletxt,"a");
+    }
+    //guardar resultados y cerrar
+    $lintxt ='Total de archivos: '.$totalfile.'  Directorios: '.$totaldir.' archivos pdf : (nuevos) '.$nfile.' (Existentes) '.$existente.' (de extraccion) '.$total_P;
+    fwrite($fileLog,$lintxt.PHP_EOL);
+    fclose($fileLog);
+}
+
 function buscartexto($origen, $texto)
 {
     //busca un texto de derecha a izquierda
@@ -63,101 +174,6 @@ function buscartexto($origen, $texto)
     return $salida;
 }
 
-
-function buscarpdf($pathx)
-{
-    $afiles = array();
-    $adir = array();
-    $nfile = 0;
-    $ndir = 0;
-    $length = $GLOBALS["length"];
-    $procesar = true;
-
-    $eldir = scandir($pathx);
-
-    // Arreglo con todos los nombres de los archivos
-    $files = array_diff($eldir, array('.', '..'));
-    echo 'Ruta: ' . $pathx . chr(10);
-    //listamos los archivos que no contengan la clave _P00000 y a parte la lista de directorios
-    foreach ($files as $file) {
-        $procesar = true;
-        $data = explode(".", $file);
-        //si es un archivo
-        if (is_file($pathx . '/' . $file)) {
-            $fileExtension = $data[1];
-            //es un archivo pdf
-            if (strtoupper($fileExtension) == 'PDF') {
-                //busca si tiene la clave _P
-                $indexb = buscartexto($data[0], '_P');
-                if ($indexb > 0) {
-                    $largo = strlen($data[0]) - $indexb - 2;
-                    //despues de la clave hay caracteres
-                    if ($largo > 0 && $largo <= $length) {
-                        //obtenemos la parte numerica
-                        $part2 = substr($data[0], $indexb + 2, $largo);
-                        $valpart2 = intval($part2);
-                        //es un valor 1 a 99999
-                        if ($valpart2 > 0 && $valpart2 < 100000) {
-                            $procesar = false;
-                        }
-                    }
-                } else {
-                    $string1 = substr(str_repeat(0, $length) . '1', -$length);
-                    $parte1 = $pathx . '/' . $data[0] . '_P' . $string1 . ".pdf";
-                    $parte2 = $pathx . '/' . $data[0] . '_P1' . ".pdf";
-                    if (file_exists($parte1) || file_exists($parte2)) {
-                        $procesar = false;
-                        echo '['.$file . '] -Archivo ya procesado-' . chr(10);
-                    } else {
-                        $procesar = true;
-                    }
-                }
-
-                if ($procesar) {
-                    array_push($afiles, $file);
-                    $nfile += 1;
-                }
-            }
-        } else {
-            array_push($adir, $file);
-            $ndir += 1;
-        }
-    }
-
-    //procesamos primero los archivos del directorio
-    if ($nfile > 0) {
-        foreach ($afiles as $file) {
-            $data = explode(".", $file);
-            // Nombre del archivo
-            $fileName = $data[0];
-            $fileExtension = $data[1];
-
-            echo '['.$file . '] ';
-
-            $old_pdf = $pathx . '/' . $file;
-            $new_pdf = $pathx . '/' . $fileName . '_P';
-
-            $oldpath = $new_pdf;
-
-            /*verifica la version y genera un archivo convertido nombre_v14.pdf
-            $newpath = verifyPdfVersion($oldpath);
-            if ($newpath) {
-                if ($newpath != $oldpath) {
-                    $new_pdf = $newpath;
-                    $eliminar= true;
-                }
-            }*/
-
-            dividerPdf($pathx, $new_pdf, $old_pdf);
-            
-        }
-    } else {
-        foreach ($adir as $ruta) {
-            buscarpdf($pathx . "/" . $ruta);
-        }
-    }
-}
-
 function dividerPdf($path2, $pdfPath, $pdfAbsolutePath)
 {
     $rut = $GLOBALS["rut"];
@@ -165,49 +181,58 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath)
 
     $pdf = new Fpdi();
     $pagecount = $pdf->setSourceFile($pdfAbsolutePath);
-    echo '['.$pagecount . ' pág] ';
+    $resp =  '[' . $pagecount . ' pag] ';
     if ($pagecount) {
         if ($pagecount > 1) {
             $fecha = new DateTime();
-            $nstamp = $fecha->getTimestamp();
+            //$nstamp = $fecha->getTimestamp();
+            $nstamp = time();
+            
             $ahora = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
             $formateado = $ahora->format("Y-m-d H:i:s.u");
-            echo 'Inicia division' . $formateado . ' -> ';
+            $resp = $resp . 'Inicia division' . $formateado . ' -> ';
             // Split each page into a new PDF
             for ($i = 1; $i <= $pagecount; $i++) {
+                $GLOBALS['cadMd5ts'] = "";
                 $string = substr(str_repeat(0, $length) . $i, -$length);
                 $new_filename2 = $pdfPath . $string . ".pdf";
+                //obtene la cadena resumen de la hoja de pdf
+                $tem_pdf = new Fpdi();
+                $tem_pdf->AddPage();
+                $tem_pdf->setSourceFile($pdfAbsolutePath);
+                $tem_pdf->useTemplate($tem_pdf->importPage($i));
+                //obtenemos mdf5 y timestamp de la hoja
+                $file_content = $tem_pdf->Output("S", $new_filename2, false);
+                $md5f = md5($file_content);
+                $GLOBALS['cadMd5ts'] = cadstamtime($md5f, $i);
+                //impresion de hoja
+
                 $new_pdf = new Fpdi();
                 $new_pdf->AddPage();
                 $new_pdf->setSourceFile($pdfAbsolutePath);
                 $new_pdf->useTemplate($new_pdf->importPage($i));
+
                 try {
-                    $new_filename = $new_filename2;
-                    echo "---------";
-                    //$new_pdf->Output($new_filename, "F");
-                    //obtenemos mdf5 y timestamp de la hoja
-                    $file_content = $new_pdf->Output("S",$new_filename, false);
-                    $md5f = md5($file_content);
-                    $cadMd5ts = cadstamtime($md5f, $i);
                     //agregamos MD5 + timespamt + hoja
-                    $new_pdf->SetFont('Arial', 'R', '11');
-                    $new_pdf->SetXY(30,-15);
-                    $new_pdf->Write(200,$cadMd5ts);
-                    print_r(" cadena MD5 ");
+                    $new_pdf->SetFont('Courier', '', '9');
+                    $new_pdf->SetY(-18);
+                    $new_pdf->Cell(0, 0, $GLOBALS['cadMd5ts']);
                     //guardamos
-                    $new_pdf->Output($new_filename, "F");
+                    $new_pdf->Output($new_filename2, "F");
                 } catch (Exception $e) {
                     echo 'Caught exception: ',  $e->getMessage(), "\n";
                 }
             }
             $fecha = new DateTime();
-            $nstamp2 = $fecha->getTimestamp();
+            //$nstamp2 = $fecha->getTimestamp();
+            $nstamp2 = time();
             $ahora = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
             $formateado = $ahora->format("Y-m-d H:i:s.u");
             $difstamp = $nstamp2 - $nstamp;
-            echo $formateado.' = '.$difstamp.chr(10); 
-        }
-    }
+            $resp = $resp. $formateado;
+        } else $resp = '[archivo de una pagina]';
+    } else $resp = '[Error-al abrir archivo]';
+    return $resp;
 }
 
 function verifyPdfVersion($pdfPath)
@@ -305,7 +330,19 @@ function isActiveGS()
 function cadstamtime($md5actual, $hoja)
 {
     $hoy = time();
-    return $md5actual.'  '.date("Y-m-d H:I:s",$hoy).' page '.$hoja;
+    return $md5actual . '  ' . date("Y-m-d H:I:s", $hoy) . ' page ' . $hoja;
 }
 
-?>
+function LoadDir()
+{
+    $ListaDir = array();
+    $filedir00 = fopen($GLOBALS["DirApp"]."/configdir.txt", "r");
+    if ($filedir00) {
+        while (!feof($filedir00)) {
+            $linea = fgets($filedir00);
+            array_push($ListaDir, $linea);
+        }
+    }
+    fclose($filedir00);
+    return $ListaDir;
+}

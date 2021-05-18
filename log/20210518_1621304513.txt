@@ -1,0 +1,5 @@
+Monitoreo de division de archivos PDF : 20212021-05-18 02:21:53
+Ruta: /pruebas/separatePDF/carpetaA
+[10paginas version17.pdf] [10 pág] Inicia division2021-05-18 02:21:53.168357 -> 2021-05-18 02:21:53.323387 = 0timestamp
+[V10PAGINAS.PDF] [10 pág] Inicia division2021-05-18 02:21:53.323785 -> 2021-05-18 02:21:53.356512 = 0timestamp
+Total de archivos: 2  Directorios: 0 archivos pdf : (nuevos) 2 (Existentes) 0 (de extraccion) 0
