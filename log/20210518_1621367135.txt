@@ -1,7 +1,0 @@
-revision: 2021-05-18  19:05:35
-Structure name                                               pages process start              finished
----------+--------------------------------------------------+-----+--------------------------+--------------------------
-[Ruta]    /pruebas/separatePDF/carpetaA                      
-[archivo] separatePDF.pdf                                    10    2021-05-18 19:45:35.926173 2021-05-18 19:45:36.091714
-[archivo] w10paginas version17.pdf                           10    2021-05-18 19:45:36.092584 2021-05-18 19:45:36.252383
-Total de archivos: 13  Directorios: 0 archivos pdf : (nuevos) 2 (Existentes) 1 (de extraccion) 10

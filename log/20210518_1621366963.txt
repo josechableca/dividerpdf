@@ -1,5 +1,0 @@
-revision: 2021-05-18  19:05:43
-Structure name                                               pages process start              finished
----------+--------------------------------------------------+-----+--------------------------+--------------------------
-[Ruta]    /pruebas/separatePDF/carpetaA                      
-[archivo] separatePDF.pdf                                    

@@ -1,7 +1,0 @@
-revision: 2021-05-18  19:05:39
-Structure name                                               pages process start              finished
----------+--------------------------------------------------+-----+--------------------------+--------------------------
-[Ruta]    /pruebas/separatePDF/carpetaA                      
-[archivo] 10paginas version17.pdf                            10    2021-05-18 19:41:39.729942 2021-05-18 19:41:39.891367
-[archivo] Barcode10.pdf                                      10    2021-05-18 19:41:39.894423 2021-05-18 19:41:40.090422
-[archivo] separatePDF.pdf                                    

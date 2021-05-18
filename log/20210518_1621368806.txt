@@ -1,5 +1,0 @@
-revision: 2021-05-18  20:05:26
-Structure name                                               pages process start              finished
----------+--------------------------------------------------+-----+--------------------------+--------------------------
-[Ruta]    /pruebas/separatePDF/carpetaA                      
-Total de archivos: 27  Directorios: 0 archivos pdf : (nuevos) 0 (Existentes) 3 (de extraccion) 24
