@@ -49,6 +49,7 @@ foreach ($dir as $rutas) {
         $existente += $exnte;
         $total_P += $ttal_P;
         $pagextra += $npag;
+        print_r($tfile.' '. $tdir.' '.$nfle.' '. $npag.' '. $exnte.' '. $ttal_P .PHP_EOL);
     }
 }
 $fileLog = fopen($namefiletxt, "a");
@@ -156,7 +157,6 @@ function buscarpdf($pathx, $namefiletxtV, $es_error, $file_err)
     //si no se ha creado el archivo log, proceder a crear
 
     if (!$namefiletxt) {
-        print_r('inicia log' . PHP_EOL);
         $namefiletxt = iniciaLog();
     }
 
@@ -288,7 +288,6 @@ function buscarpdf($pathx, $namefiletxtV, $es_error, $file_err)
         if ($nfile = 0) fclose($fileLog);
 
         foreach ($adir as $ruta) {
-            print_r($namefiletxt . PHP_EOL);
             list($tfile, $tdir, $nfle, $npag, $exnte, $ttal_P) = buscarpdf($pathx . "/" . $ruta, $namefiletxt, $es_error, $file_err);
             //contabilizamos
             $totalfile += $tfile;
