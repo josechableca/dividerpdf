@@ -19,7 +19,7 @@ $length = 5;
 $dir = file($DirApp . '/Listdir.txt');
 
 InicializaApp();
-//iniciaLog();
+$namefiletxt = iniciaLog();
 
 
 //verificacion de errores 
@@ -31,19 +31,45 @@ if ($numitem == 1) {
     $eserror = true;
 }
 //revision de todas las rutas cargadas
+$nfile = 0;
+$totalfile = 0;
+$total_P = 0;
+$totaldir = 0;
+$existente = 0;
+$pagextra = 0;
+
 foreach ($dir as $rutas) {
     $rutas2 = trim($rutas);
     if (strlen($rutas2) > 8) {
-        list($tfile, $tdir, $nfle, $exnte, $ttal_P) = buscarpdf($rutas2, null, $eserror, $fileerr);
+        $totaldir += 1;
+        list($tfile, $tdir, $nfle, $npag, $exnte, $ttal_P) = buscarpdf($rutas2, $namefiletxt, $eserror, $fileerr);
+        $totalfile += $tfile;
+        $totaldir += $tdir;
+        $nfile += $nfle;
+        $existente += $exnte;
+        $total_P += $ttal_P;
+        $pagextra += $npag;
     }
 }
+$fileLog = fopen($namefiletxt, "a");
+if ($nfile > 0) {
+    $lintxt = espacios('[Total]', 9) . ' ' . espacios($totaldir, 4,0) . '-Directorios  ' . espacios($totalfile, 9,0) . '-Archivos PDF ---> ' . espacios($nfile, 5,0) . '-PDF Procesados  '. espacios($pagextra, 5,0) . '-Pag Extraidas  ' . espacios($existente, 5,0) . '-PDF Existentes ' . $total_P . '-Pag existentes';
+} else {
+    $lintxt = espacios('[Total]', 9) . ' -----Sin cambios-----';
+}
+fwrite($fileLog, '-----------------------------------------------------------------------------------------------------------------------------------' . PHP_EOL);
+fwrite($fileLog, $lintxt . PHP_EOL);
+fclose($fileLog);
+
+
+
 
 
 /* -------------funcion recursiva----------------------------- */
 function InicializaApp()
 {
     $DirApp2 = $GLOBALS['DirApp'];
-    //nombre de archivo log con base en la fecha y hora----------------------------------
+    //nombre de archivo log con base en la fecha y hora---
     $hoy = time();
     //verificamos carpetas log, staticts, year
     $namecheck = $DirApp2 . '/log';
@@ -99,15 +125,16 @@ function iniciaLog()
     $namefiletxt = $GLOBALS["DirApp"] . '/log/' . $namefile . $hoy . '.txt';
     $fileLog = fopen($namefiletxt, "w");
     fwrite($fileLog, 'revision: ' . date("Y-m-d  H:m:s", $hoy) . PHP_EOL);
-    //                123456789 12345678901234567890123456789012345678901234567890 12345 12345678901234567890123456 12345678901234567890123456
-    fwrite($fileLog, 'Structure name                                               pages process start              finished' . PHP_EOL);
-    fwrite($fileLog, '---------+--------------------------------------------------+-----+--------------------------+--------------------------' . PHP_EOL);
+    //                123456789 12345678901234567890123456789012345678901234567890 12345 12345678901234567890123456 12345678901234567890123456 1234567890
+    fwrite($fileLog, 'Structure name                                               pages process start              finished                     time' . PHP_EOL);
+    fwrite($fileLog, '---------+--------------------------------------------------+-----+--------------------------+--------------------------+----------' . PHP_EOL);
     fclose($fileLog);
     return $namefiletxt;
 }
 
-function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
+function buscarpdf($pathx, $namefiletxtV, $es_error, $file_err)
 {
+    $namefiletxt = $namefiletxtV; //substr($namefiletxtV,0,strlen($namefiletxtV));
     $afiles = array();
     $adir = array();
     //contadores
@@ -118,6 +145,7 @@ function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
     $total_P = 0;
     $totaldir = 0;
     $existente = 0;
+    $totalpag = 0;
 
     $length = $GLOBALS["length"];
     $procesar = true;
@@ -128,6 +156,7 @@ function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
     //si no se ha creado el archivo log, proceder a crear
 
     if (!$namefiletxt) {
+        print_r('inicia log' . PHP_EOL);
         $namefiletxt = iniciaLog();
     }
 
@@ -217,6 +246,8 @@ function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
 
     //procesamos primero los archivos del directorio
     if ($nfile > 0) {
+        iniciaMes();
+        iniciaYear();
         foreach ($afiles as $file) {
             $data = explode(".", $file);
             // Nombre del archivo
@@ -246,8 +277,8 @@ function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
             fwrite($fileLog, $ejecuta);
             //proceso DIVIDIR
 
-            $resultado = dividerPdf($pathx, $new_pdf, $old_pdf, $part, $checaerrpdf);
-
+            List($resultado, $tpages) = dividerPdf($pathx, $new_pdf, $old_pdf, $part, $checaerrpdf);
+            $totalpag += $tpages;
             fwrite($fileLog, $resultado . PHP_EOL);
         }
         if ($ndir > 0) {
@@ -257,37 +288,53 @@ function buscarpdf($pathx, $namefiletxt, $es_error, $file_err)
         if ($nfile = 0) fclose($fileLog);
 
         foreach ($adir as $ruta) {
-            list($tfile, $tdir, $nfle, $exnte, $ttal_P) = buscarpdf($pathx . "/" . $ruta, $namefiletxt, $es_error, $file_err);
+            print_r($namefiletxt . PHP_EOL);
+            list($tfile, $tdir, $nfle, $npag, $exnte, $ttal_P) = buscarpdf($pathx . "/" . $ruta, $namefiletxt, $es_error, $file_err);
             //contabilizamos
             $totalfile += $tfile;
             $totaldir += $tdir;
             $nfile += $nfle;
             $existente += $exnte;
             $total_P += $ttal_P;
+            $totalpag += $npag;
         }
         $fileLog = fopen($namefiletxt, "a");
     }
     //guardar resultados y cerrar
-    $lintxt = 'Total de archivos: ' . $totalfile . '  Directorios: ' . $totaldir . ' archivos pdf : (nuevos) ' . $nfile . ' (Existentes) ' . $existente . ' (de extraccion) ' . $total_P;
+    if ($nfile > 0) {
+        $lintxt = espacios('[Total]', 9) . ' ' . espacios($totaldir, 4,0) . '-Directorios  ' . espacios($totalfile, 9,0) . '-Archivos PDF ---> ' . espacios($nfile, 5,0) . '-PDF Procesados ' . espacios($totalpag, 5,0) . '-Pag Extraidas  ' . espacios($existente, 5,0) . '-PDF Existentes ' . $total_P . '-Pag existentes';
+    } else {
+        $lintxt = espacios('[Total]', 9) . ' -----------Sin cambios------';
+    }
+    if ($ndir>0 ) {
     fwrite($fileLog, $lintxt . PHP_EOL);
+    }
     fclose($fileLog);
     //guardamos si no ocurrio error 
     $fileXerr = fopen($GLOBALS["DirApp"] . '/Lastresult.log', "w");
     fwrite($fileXerr, 'OK' . PHP_EOL);
     fclose($fileXerr);
+
+    return array($totalfile, $totaldir, $nfile, $totalpag, $existente, $total_P);
 }
 
-function espacios($eltexto, $numcar)
+function espacios($eltexto, $numcar, $lado = 1)
 {
+
     $tmp = $eltexto;
     if ($numcar > 0) {
         $largo = strlen($eltexto);
         if ($largo < $numcar) {
             $falta = $numcar - $largo;
             $string1 = str_repeat(" ", $falta);
-            $tmp = $eltexto . $string1;
+            if ($lado != 0) {
+                $tmp = $eltexto . $string1;
+            } else {
+                $tmp = $string1 . $eltexto;
+            }
         }
     }
+
     return $tmp;
 }
 
@@ -314,10 +361,15 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath, $file_part, $es_ruta)
 {
     $rut = $GLOBALS["rut"];
     $length = $GLOBALS["length"];
-
+    $t_inicial = 0;
+    $t_final = 0;
+    $t_micro1 = 0;
+    $t_micro2 = 0;
+    $numpag = 0;
     $pdf = new Fpdi();
     $pagecount = $pdf->setSourceFile($pdfAbsolutePath);
     $inicial = 1;
+    $numpag = $pagecount;
     if ($es_ruta) {
         if ($file_part > 0) {
             $inicial = $file_part;
@@ -328,15 +380,11 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath, $file_part, $es_ruta)
     if ($pagecount) {
         if ($pagecount > 1) {
             //almacnamos time stamp de inicio            
-            //$nstamp = time();
+            $t_inicial = time();
+            $t_micro1 = microtime(true);
             $ahora = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
             $formateado = $ahora->format("Y-m-d H:i:s.u");
             $resp = $resp . espacios($formateado, 26) . ' ';
-
-            //iniciamos registro del mes
-            iniciaMes();
-            iniciaYear();
-
 
             // Split each page into a new PDF
             for ($i = $inicial; $i <= $pagecount; $i++) {
@@ -372,18 +420,21 @@ function dividerPdf($path2, $pdfPath, $pdfAbsolutePath, $file_part, $es_ruta)
                     echo 'Caught exception: ',  $e->getMessage(), "\n";
                 }
             }
-            $fecha = new DateTime();
-            //$nstamp2 = $fecha->getTimestamp();
-            //$nstamp2 = time();
+
+            $t_final = time();
+            $t_micro2 = microtime(true);
             $ahora = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
             $formateado = $ahora->format("Y-m-d H:i:s.u");
-            //$difstamp = $nstamp2 - $nstamp;
-            $resp = $resp . espacios($formateado, 26);
+            $diftime = $t_final - $t_inicial;
+            $diftime2 = $t_micro2 - $t_micro1;
+            $formatnum = number_format($diftime2, 6, '.', '');
+            $resp = $resp . espacios($formateado, 26) . ' ' . espacios($formatnum, 10);
             RegistraMes('mes', 1);
             RegistraYear('mes', 1);
         } else $resp = '[archivo de una pagina]';
     } else $resp = '[Error-al abrir archivo]';
-    return $resp;
+
+    return array($resp, $numpag);
 }
 
 function obtenerMD5($filenn, $i2, $pdfAbsolutePath2)
